@@ -1,9 +1,6 @@
 services:
   node:
     build: ./node
-    # Optionally set PEER_NODES to a comma-separated list of peer URLs for manual override.
-    # environment:
-    #   - PEER_NODES=http://node-2:8000,http://node-3:8000
     deploy:
       replicas: 5
     restart: unless-stopped
