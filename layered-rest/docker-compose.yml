@@ -1,11 +1,28 @@
-version: '3.8'
 services:
   node:
     build: ./node
-    ports:
-      - "8000-8004:8000"
-    environment:
-      - PEER_NODES=http://node:8000,http://node:8001,http://node:8002,http://node:8003,http://node:8004
+    # Optionally set PEER_NODES to a comma-separated list of peer URLs for manual override.
+    # environment:
+    #   - PEER_NODES=http://node-2:8000,http://node-3:8000
     deploy:
       replicas: 5
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/queue"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - node
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
     restart: unless-stopped
