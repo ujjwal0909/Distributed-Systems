@@ -1,0 +1,9 @@
+version: '3.8'
+services:
+  node:
+    build: ./node
+    ports:
+      - "8000-8004:8000"
+    deploy:
+      replicas: 5
+    restart: unless-stopped

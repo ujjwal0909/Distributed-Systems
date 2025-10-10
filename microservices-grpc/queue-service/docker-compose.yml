@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  queue-service:
+    build: .
+    ports:
+      - "50051:50051"
+    restart: unless-stopped
+  grpc-client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: ["python", "client.py"]
+    depends_on:
+      - queue-service
+    network_mode: "service:queue-service"
