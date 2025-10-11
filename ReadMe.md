@@ -1,3 +1,36 @@
+## gRPC Distributed Music Queue (microservices-grpc)
+
+This system uses Python, gRPC, and Redis for a distributed music queue. It supports autoscaling and robust distributed sync.
+
+### 1. Build and Start the gRPC System
+
+From the project root:
+
+```powershell
+docker compose -f microservices-grpc/docker-compose.yml up --build --scale queue-service=5
+```
+
+This will start 5 gRPC queue-service nodes and a shared Redis backend. Adjust the number after `--scale` as needed.
+
+### 2. Run the Automated Test Suite
+
+In a separate terminal, run:
+
+```powershell
+docker compose -f microservices-grpc/docker-compose.yml run --rm test-runner
+```
+
+This will execute all gRPC test scripts and print a summary of results. All tests should pass if the system is running.
+
+### 3. Stopping the gRPC System
+
+To stop all containers:
+
+```powershell
+docker compose -f microservices-grpc/docker-compose.yml down
+```
+
+---
 
 # Distributed Music Queue System
 

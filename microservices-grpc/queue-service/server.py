@@ -17,7 +17,7 @@ class QueueServiceServicer(queue_pb2_grpc.QueueServiceServicer):
         self.history_key = 'history'
 
     def AddTrack(self, request, context):
-        # Serialize Track to bytes
+        # Serialize Track to bytes (now includes duration)
         self.redis.rpush(self.queue_key, request.SerializeToString())
         queue = self._get_queue()
         return queue_pb2.QueueResponse(message="Track added", queue=queue)
@@ -72,7 +72,7 @@ class QueueServiceServicer(queue_pb2_grpc.QueueServiceServicer):
         return queue_pb2.QueueList(queue=history)
 
     def _get_queue(self):
-        # Get all tracks from Redis queue
+        # Get all tracks from Redis queue (now includes duration)
         data_list = self.redis.lrange(self.queue_key, 0, -1)
         queue = []
         for data in data_list:

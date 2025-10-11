@@ -7,12 +7,10 @@ services:
     ports:
       - "6379:6379"
 
-  queue-service1:
+  queue-service:
     build:
       context: ./queue-service
       dockerfile: Dockerfile
-    ports:
-      - "50051:50051"
     environment:
       - START_PORT=50051
       - PORT_RANGE=50
@@ -22,22 +20,8 @@ services:
     restart: unless-stopped
     depends_on:
       - redis
-
-  queue-service2:
-    build:
-      context: ./queue-service
-      dockerfile: Dockerfile
-    ports:
-      - "50052:50051"
-    environment:
-      - START_PORT=50051
-      - PORT_RANGE=50
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    entrypoint: ["/app/entrypoint.sh"]
-    restart: unless-stopped
-    depends_on:
-      - redis
+    deploy:
+      replicas: 5
 
   test-runner:
     build:
@@ -55,7 +39,6 @@ services:
       - PORT_RANGE=50
       - PYTHONPATH=/app
     depends_on:
-      - queue-service1
-      - queue-service2
+      - queue-service
       - redis
     restart: "no"

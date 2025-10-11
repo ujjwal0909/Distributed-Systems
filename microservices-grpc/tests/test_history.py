@@ -9,7 +9,7 @@ def main():
     r = redis.Redis(host='redis', port=6379, decode_responses=False)
     r.delete('queue')
     r.delete('history')
-    target = sys.argv[1] if len(sys.argv) > 1 else 'queue-service1:50051'
+    target = sys.argv[1] if len(sys.argv) > 1 else 'queue-service:50051'
     channel = grpc.insecure_channel(target)
     stub = queue_pb2_grpc.QueueServiceStub(channel)
 
