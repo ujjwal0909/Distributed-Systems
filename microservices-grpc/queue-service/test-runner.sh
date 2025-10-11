@@ -1,9 +1,10 @@
 #!/bin/sh
 set -e
 
+
 # Wait for all queue-service containers to be ready
 echo "Waiting for queue-service containers to be ready..."
-sleep 10
+sleep 25
 
 # Run the test runner script (Python)
 echo "Running test suite..."
