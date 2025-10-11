@@ -23,3 +23,15 @@ services:
     ports:
       - "6379:6379"
     restart: unless-stopped
+  test-runner:
+    build:
+      context: ./node
+    environment:
+      - API_URL=http://node:8000/queue
+    depends_on:
+      - node
+      - nginx
+    volumes:
+      - ./tests:/app
+      - ./node/test-runner.sh:/app/test-runner.sh:ro
+    entrypoint: ["/bin/sh", "/app/test-runner.sh"]

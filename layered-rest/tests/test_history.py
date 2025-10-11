@@ -1,11 +1,10 @@
 import requests
 import time
 
-base_url = "http://localhost:8080"
+base_url = "http://nginx:8080"
 
 def clear_queue():
-    for tid in range(1, 5):
-        requests.post(f"{base_url}/remove_track", json={"id": tid})
+    requests.post(f"{base_url}/clear")
 
 def test_history():
     clear_queue()

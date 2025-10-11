@@ -67,10 +67,13 @@ def broadcast_queue():
             print(f"[ERROR] Failed to sync with {peer}: {e}")
 
 
+
 @app.post("/add_track")
 def add_track(track: Track):
     queue = get_queue()
     queue.append(track)
+    # Always sort by votes descending, then by id ascending for stability
+    queue.sort(key=lambda x: (-x.votes, x.id))
     set_queue(queue)
     broadcast_queue()
     return {"message": "Track added", "queue": queue}
@@ -86,12 +89,15 @@ def remove_track(action: TrackAction):
 
 
 @app.post("/vote")
+
+@app.post("/vote")
 def vote_track(action: TrackAction, up: bool = True):
     queue = get_queue()
     for t in queue:
         if t.id == action.id:
             t.votes += 1 if up else -1
-    queue.sort(key=lambda x: -x.votes)
+    # Always sort by votes descending, then by id ascending for stability
+    queue.sort(key=lambda x: (-x.votes, t.id))
     set_queue(queue)
     broadcast_queue()
     return {"queue": queue}
@@ -129,6 +135,7 @@ def api_get_history():
 
 
 # Sync endpoint for receiving queue updates from peers
+# Sync endpoint for receiving queue updates from peers
 @app.post("/sync")
 def sync_queue(new_queue: List[Track]):
     print(f"[DEBUG] Received sync: {new_queue}")
@@ -136,3 +143,11 @@ def sync_queue(new_queue: List[Track]):
     set_queue(queue)
     print(f"[DEBUG] Queue after sync: {queue}")
     return {"message": "Queue synchronized", "queue": queue}
+
+
+# Test utility endpoint to clear queue and history (for test isolation)
+@app.post("/clear")
+def clear_all():
+    redis_client.delete(QUEUE_KEY)
+    redis_client.delete(HISTORY_KEY)
+    return {"message": "Queue and history cleared"}
