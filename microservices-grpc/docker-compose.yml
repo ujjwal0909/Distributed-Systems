@@ -1,6 +1,4 @@
-
 services:
-
   redis:
     image: redis:7-alpine
     restart: unless-stopped
@@ -20,8 +18,6 @@ services:
     restart: unless-stopped
     depends_on:
       - redis
-    deploy:
-      replicas: 5
 
   test-runner:
     build:
@@ -39,6 +35,21 @@ services:
       - PORT_RANGE=50
       - PYTHONPATH=/app
     depends_on:
-      - queue-service
+      - nginx-grpc
       - redis
     restart: "no"
+
+  nginx-grpc:
+    image: nginx:1.25-alpine
+    volumes:
+      - ./nginx-grpc.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - queue-service
+    ports:
+      - "15051:50051"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 10s
+      timeout: 5s
+      retries: 3

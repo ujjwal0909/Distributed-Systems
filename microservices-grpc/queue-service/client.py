@@ -4,7 +4,7 @@ import queue_pb2
 import queue_pb2_grpc
 import sys
 
-HOST = 'queue-service:50051'
+HOST = 'nginx-grpc:50051'
 
 def add_track(stub, args):
     resp = stub.AddTrack(queue_pb2.Track(

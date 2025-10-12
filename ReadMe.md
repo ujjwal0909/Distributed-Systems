@@ -1,51 +1,72 @@
+
 # Distributed Music Queue System
 
-This project implements a distributed music queue system using **two distinct system architectures**:
-
-- **Layered/Resource-Based Architecture (REST/HTTP):**
-  - Implemented in the `layered-rest` directory using FastAPI and HTTP (RESTful) endpoints.
-  - Nodes are stateless FastAPI apps, with Nginx as a load balancer and Redis as a shared backend for distributed state.
-  - Communication model: HTTP/REST.
-
-- **Microservices Architecture (gRPC):**
-  - Implemented in the `microservices-grpc` directory using Python, gRPC, and Redis.
-  - Each node is a gRPC microservice, communicating via gRPC and sharing state through Redis.
-  - Communication model: gRPC.
-
-Both systems support autoscaling (multiple nodes), distributed synchronization, and are fully containerized with Docker Compose. Automated test runners are provided for each architecture.
+This project implements a distributed music queue system using **two distinct system architectures**: a Layered/Resource-Based (REST/HTTP) design and a Microservices (gRPC) design. Both architectures support distributed queue management, voting, metadata, simulated playing, and playback history, and are fully containerized for easy scaling and testing.
 
 ---
 
-## System Architecture Overview
+## System Architecture Summary
 
-- **Layered/Resource-Based (REST/HTTP):** Stateless FastAPI nodes, Nginx load balancing, Redis backend, HTTP/REST communication.
-- **Microservices (gRPC):** Python gRPC services, Redis backend, gRPC communication.
-- **Redis Backend:** All nodes in both architectures share a single Redis instance for queue, history, and metadata storage.
-- **Docker Compose Orchestration:** All services (nodes, Redis, Nginx, test-runner) are orchestrated via Docker Compose, with healthchecks and service dependencies for reliable startup.
-- **Automated Test Runner:** Test scripts are run inside a dedicated container, ensuring tests execute in the same network as the services, using Compose DNS for service discovery.
-
-## Quick Start Guide
-
-All commands below are run from the project root directory (the folder containing this README). You do NOT need to change directories.
+- **Layered/Resource-Based (REST/HTTP):**
+   - FastAPI stateless nodes, Nginx load balancer, Redis backend, HTTP/REST communication.
+- **Microservices (gRPC):**
+   - Python gRPC services, Redis backend, gRPC communication, Nginx load balancer for gRPC.
+- **Redis Backend:**
+   - Shared by all nodes for queue, history, and metadata.
+- **Docker Compose:**
+   - Orchestrates all services, healthchecks, and dependencies.
+- **Automated Test Runner:**
+   - Runs all tests in a container, using Compose DNS for service discovery.
 
 ---
 
-### Layered/Resource-Based Architecture (REST/HTTP)
+## Quick Start
 
-**Build and Start the System:**
+**All commands are run from the project root.**
+
+### 1. Build and Start Either System
+
+- **REST/HTTP:**
+   ```powershell
+   docker compose -f layered-rest/docker-compose.yml up --build --scale node=5 -d
+   ```
+- **gRPC Microservices:**
+   ```powershell
+   docker compose -f microservices-grpc/docker-compose.yml up --build --scale queue-service=5 -d
+   ```
+
+### 2. Run Automated Test Suite
+
+- **REST/HTTP:**
+   ```powershell
+   docker compose -f layered-rest/docker-compose.yml run --rm test-runner
+   ```
+- **gRPC Microservices:**
+   ```powershell
+   docker compose -f microservices-grpc/docker-compose.yml run --rm test-runner
+   ```
+
+### 3. Manual API/CLI Usage
+
+- **REST/HTTP:**
+   - Web GUI: [http://localhost:8080/](http://localhost:8080/) → `/docs` (Swagger UI)
+   - Command-line: Use `curl` or PowerShell's `Invoke-WebRequest` (see below for examples)
+- **gRPC:**
+   - Use the provided Python CLI inside a running queue-service container. All gRPC requests are routed through the Nginx load balancer (`nginx-grpc:50051`) for proper load balancing (see below for all commands).
+
+### 4. Stop the System
 
 ```powershell
-docker compose -f layered-rest/docker-compose.yml up --build --scale node=3
+docker compose -f layered-rest/docker-compose.yml down
+docker compose -f microservices-grpc/docker-compose.yml down
 ```
 
-This starts 3 FastAPI nodes, Nginx (load balancer), and Redis (shared backend). Adjust the number after `--scale node=` as needed for autoscaling.
+---
 
-**Access the REST API:**
 
-- Web GUI: Open [http://localhost:8080/](http://localhost:8080/) in your browser. This redirects to `/docs`, the interactive FastAPI Swagger UI for exploring and testing endpoints.
-- Command Line: Use `curl` or PowerShell's `Invoke-WebRequest` to interact with the API. See below for examples.
+## REST/HTTP API Examples
 
-**Example API Requests:**
+You can use the web GUI at [http://localhost:8080/](http://localhost:8080/) or the following command-line examples:
 
 Add a track to the queue:
 ```sh
@@ -111,51 +132,25 @@ docker compose -f layered-rest/docker-compose.yml down
 
 ---
 
-### Microservices Architecture (gRPC)
 
-**First-Time Setup: Generate gRPC Python Files**
+## gRPC Microservices: Manual CLI Usage
 
-If you do not see `queue_pb2.py` and `queue_pb2_grpc.py` in `microservices-grpc/queue-service/` and `microservices-grpc/tests/`, you must generate them from `queue.proto` before running tests or the client locally (outside Docker). This is not needed if you only use Docker Compose, as the Docker build handles it automatically.
+**First-Time Setup (for local runs, not Docker, is only needed for running the test scripts):**
 
-To generate the files manually:
+If you do not see `queue_pb2.py` and `queue_pb2_grpc.py` in `microservices-grpc/queue-service/` and `microservices-grpc/tests/`, generate them from `queue.proto`:
 
 ```powershell
 cd microservices-grpc/queue-service
 python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. queue.proto
 ```
-
-Repeat this in the `microservices-grpc/tests/` directory if you want to run tests directly from there.
-
 You need `grpcio` and `grpcio-tools` installed:
 ```powershell
 pip install grpcio grpcio-tools
 ```
 
+**Example CLI Commands (run from project root):**
 
-**Build and Start the System:**
-
-```powershell
-docker compose -f microservices-grpc/docker-compose.yml up --build --scale queue-service=5 -d
-```
-
-This starts 5 gRPC queue-service nodes and a shared Redis backend. Adjust the number after `--scale` as needed.
-
-**Run the gRPC Automated Test Suite:**
-
-```powershell
-docker compose -f microservices-grpc/docker-compose.yml run --rm test-runner
-```
-
-This executes all gRPC test scripts inside a container, using Compose DNS to reach the gRPC services. All tests should pass if the system is running.
-
-**Manual gRPC Interaction:**
-
-Use the provided Python client script inside a running queue-service container for all manual gRPC actions. This ensures proper networking and service discovery.
-
-#### Example: Add, Play, and View History (gRPC)
-
-
-Below are examples for every available gRPC client command. Run these from the project root.
+All gRPC CLI commands below will automatically connect to the load balancer (`nginx-grpc:50051`). Example usage (from project root):
 
 1. **Add a track:**
    ```powershell
@@ -190,4 +185,3 @@ Below are examples for every available gRPC client command. Run these from the p
    ```powershell
    docker compose -f microservices-grpc/docker-compose.yml exec queue-service python client.py remove --id 123
    ```
----

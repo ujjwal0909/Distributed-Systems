@@ -5,8 +5,8 @@ import sys
 
 def main():
     # Test sync by adding to one node and checking another
-    # In Docker Compose, all replicas are accessed via 'queue-service:50051' (load balanced)
-    target = sys.argv[1] if len(sys.argv) > 1 else 'queue-service:50051'
+    # In Docker Compose, all replicas are accessed via 'nginx-grpc:50051' (load balanced)
+    target = sys.argv[1] if len(sys.argv) > 1 else 'nginx-grpc:50051'
     channel = grpc.insecure_channel(target)
     stub = queue_pb2_grpc.QueueServiceStub(channel)
 

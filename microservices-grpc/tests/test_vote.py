@@ -4,7 +4,7 @@ import queue_pb2_grpc
 import sys
 
 def main():
-    target = sys.argv[1] if len(sys.argv) > 1 else 'queue-service:50051'
+    target = sys.argv[1] if len(sys.argv) > 1 else 'nginx-grpc:50051'
     channel = grpc.insecure_channel(target)
     stub = queue_pb2_grpc.QueueServiceStub(channel)
 
