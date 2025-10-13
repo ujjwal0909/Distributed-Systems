@@ -57,8 +57,8 @@ This project implements a distributed music queue system supporting collaborativ
 - **Redis:** Centralized, easy to use, but can bottleneck at high scale.
 
 ## 7. AI Tools
-- Used Copilot/ChatGPT for code, Docker, and debugging.
-- Accelerated development, but human oversight was key for design and tuning.
+- Used ChatGPT for brainstorming and Copilot for code, Docker, debugging, and documentation.
+- Accelerated development, but human oversight was highly needed. It made a lot of mistakes, was best at writing and explaining for ReadMe and report, as well as at fixing simple errors and providing baseline code.
 
 ## 8. Conclusion
 Both architectures meet all requirements and scale to 5+ nodes. REST is easier for users and can achieve high throughput with proper tuning, but is sensitive to deployment details. gRPC is efficient and stable, but requires additional configuration to scale horizontally. Docker Compose made scaling and testing easy. AI tools were invaluable for rapid prototyping and troubleshooting.
