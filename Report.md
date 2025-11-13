@@ -68,4 +68,9 @@ Both architectures meet all requirements and scale to 5+ nodes. REST is easier f
 - FastAPI, gRPC, Docker, Redis docs
 - Copilot
 
+## 10. Consensus Extensions
+- Implemented a gRPC-based two-phase commit system with explicit vote and decision phases, intra-node gRPC coordination, and Docker Compose deployment for five nodes.
+- Added a simplified Raft implementation with randomized election timeouts, 1-second heartbeats, log replication, client request forwarding, and failure recovery.
+- Delivered five automated Raft integration tests covering leader election, heartbeat stability, log replication, client forwarding, and leader failover.
+
 ---
