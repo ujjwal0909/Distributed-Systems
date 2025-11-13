@@ -185,3 +185,64 @@ All gRPC CLI commands below will automatically connect to the load balancer (`ng
    ```powershell
    docker compose -f microservices-grpc/docker-compose.yml exec queue-service python client.py remove --id 123
    ```
+
+---
+
+## Consensus Algorithms
+
+This repository now includes containerized implementations of the **Two-Phase Commit (2PC)** protocol and a simplified **Raft** consensus cluster. Both implementations share a gRPC-based control plane and can be exercised locally or through Docker Compose.
+
+### Two-Phase Commit (2PC)
+
+- **Start the cluster (1 coordinator + 4 participants):**
+  ```bash
+  docker compose -f consensus/two_pc/docker-compose.yml up --build -d
+  ```
+- **Trigger a transaction from the coordinator control plane:**
+  ```bash
+  python -m consensus.two_pc.manager localhost:6100 "add-track" --participants 0 1 2 3 4
+  ```
+  Every RPC prints trace statements such as
+  `Phase vote of Node 0 sends RPC RequestVote to Phase vote of Node 1.` on the client side and matching server logs as required by the assignment.
+- **Shut down the cluster:**
+  ```bash
+  docker compose -f consensus/two_pc/docker-compose.yml down
+  ```
+
+Environment variables (e.g., `DEFAULT_VOTE=abort` or `ABORT_TRANSACTIONS=txn-123`) can be used on individual nodes to simulate abort scenarios.
+
+### Simplified Raft
+
+- **Start a 5-node Raft cluster:**
+  ```bash
+  docker compose -f consensus/raft/docker-compose.yml up --build -d
+  ```
+- **Submit a client command to any node:**
+  ```bash
+  python - <<'PY'
+  import grpc
+  from consensus.raft import raft_pb2, raft_pb2_grpc
+
+  channel = grpc.insecure_channel("localhost:9000")  # replace with any mapped port
+  stub = raft_pb2_grpc.RaftClientStub(channel)
+  resp = stub.ClientRequest(raft_pb2.ClientCommand(command="play song"))
+  print(resp)
+  channel.close()
+  PY
+  ```
+- **Tear down the cluster:**
+  ```bash
+  docker compose -f consensus/raft/docker-compose.yml down
+  ```
+
+All consensus RPCs emit logs in the format `Node <node_id> sends RPC <rpc_name> to Node <node_id>.` and `Node <node_id> runs RPC <rpc_name> called by Node <node_id>.` for easy traceability.
+
+### Automated Raft Test Suite
+
+Five integration tests cover leader election, heartbeat stability, log replication, client request forwarding, and failover:
+
+```bash
+python -m consensus.tests.test_raft
+```
+
+The helper uses an ephemeral port range so it can be executed repeatedly without interfering with running clusters.
