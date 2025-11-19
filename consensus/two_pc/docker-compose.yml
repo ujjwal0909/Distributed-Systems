@@ -48,4 +48,4 @@ services:
       NODE_ID: "4"
       HOST_ADDRESS: "0.0.0.0"
       PEER_MAP: "0:coordinator,1:participant1,2:participant2,3:participant3,4:participant4"
-      DEFAULT_VOTE: "abort"
+      DEFAULT_VOTE: "${P4_DEFAULT_VOTE:-commit}"

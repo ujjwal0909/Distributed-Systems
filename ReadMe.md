@@ -198,12 +198,18 @@ This repository now includes containerized implementations of the **Two-Phase Co
   ```bash
   docker compose -f consensus/two_pc/docker-compose.yml up --build -d
   ```
-- **Trigger a transaction from the coordinator control plane:**
+- **Run a commit-path transaction (copy/paste, no extra parameters needed):**
   ```bash
-  python -m consensus.two_pc.manager localhost:6100 "add-track" --participants 0 1 2 3 4
+  python -m consensus.two_pc.manager localhost:6100 --participants 0 1 2 3 4
   ```
-  Every RPC prints trace statements such as
-  `Phase vote of Node 0 sends RPC RequestVote to Phase vote of Node 1.` on the client side and matching server logs as required by the assignment.
+  The optional `--operation` flag defaults to `demo-operation` and is only used as a log label—no need to map it to an actual music track.
+- **See an abort-path transaction (recreate the cluster with participant 4 voting abort):**
+  ```bash
+  docker compose -f consensus/two_pc/docker-compose.yml down
+  P4_DEFAULT_VOTE=abort docker compose -f consensus/two_pc/docker-compose.yml up --build -d
+  python -m consensus.two_pc.manager localhost:6100 --participants 0 1 2 3 4 --transaction-id demo-abort
+  ```
+  Restore commit behavior by bringing the cluster down and starting it again without `P4_DEFAULT_VOTE=abort`.
 - **Shut down the cluster:**
   ```bash
   docker compose -f consensus/two_pc/docker-compose.yml down

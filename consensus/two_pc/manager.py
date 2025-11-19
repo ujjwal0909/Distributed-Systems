@@ -9,7 +9,14 @@ from . import two_pc_pb2, two_pc_pb2_grpc
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run a two-phase commit transaction")
     parser.add_argument("coordinator", help="Coordinator host:port for control service")
-    parser.add_argument("operation", help="Operation description")
+    parser.add_argument(
+        "--operation",
+        default="demo-operation",
+        help=(
+            "Human-readable description of the transaction (logged only, does not need to match "
+            "a real business action)"
+        ),
+    )
     parser.add_argument(
         "--participants",
         nargs="*",
