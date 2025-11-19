@@ -185,3 +185,70 @@ All gRPC CLI commands below will automatically connect to the load balancer (`ng
    ```powershell
    docker compose -f microservices-grpc/docker-compose.yml exec queue-service python client.py remove --id 123
    ```
+
+---
+
+## Consensus Algorithms
+
+This repository now includes containerized implementations of the **Two-Phase Commit (2PC)** protocol and a simplified **Raft** consensus cluster. Both implementations share a gRPC-based control plane and can be exercised locally or through Docker Compose.
+
+### Two-Phase Commit (2PC)
+
+- **Start the cluster (1 coordinator + 4 participants):**
+  ```bash
+  docker compose -f consensus/two_pc/docker-compose.yml up --build -d
+  ```
+- **Run a commit-path transaction (copy/paste, no extra parameters needed):**
+  ```bash
+  python -m consensus.two_pc.manager localhost:6100 --participants 0 1 2 3 4
+  ```
+  The optional `--operation` flag defaults to `demo-operation` and is only used as a log label—no need to map it to an actual music track.
+- **See an abort-path transaction (recreate the cluster with participant 4 voting abort):**
+  ```bash
+  docker compose -f consensus/two_pc/docker-compose.yml down
+  P4_DEFAULT_VOTE=abort docker compose -f consensus/two_pc/docker-compose.yml up --build -d
+  python -m consensus.two_pc.manager localhost:6100 --participants 0 1 2 3 4 --transaction-id demo-abort
+  ```
+  Restore commit behavior by bringing the cluster down and starting it again without `P4_DEFAULT_VOTE=abort`.
+- **Shut down the cluster:**
+  ```bash
+  docker compose -f consensus/two_pc/docker-compose.yml down
+  ```
+
+Environment variables (e.g., `DEFAULT_VOTE=abort` or `ABORT_TRANSACTIONS=txn-123`) can be used on individual nodes to simulate abort scenarios.
+
+### Simplified Raft
+
+- **Start a 5-node Raft cluster:**
+  ```bash
+  docker compose -f consensus/raft/docker-compose.yml up --build -d
+  ```
+- **Submit a client command to any node:**
+  ```bash
+  python - <<'PY'
+  import grpc
+  from consensus.raft import raft_pb2, raft_pb2_grpc
+
+  channel = grpc.insecure_channel("localhost:9000")  # replace with any mapped port
+  stub = raft_pb2_grpc.RaftClientStub(channel)
+  resp = stub.ClientRequest(raft_pb2.ClientCommand(command="play song"))
+  print(resp)
+  channel.close()
+  PY
+  ```
+- **Tear down the cluster:**
+  ```bash
+  docker compose -f consensus/raft/docker-compose.yml down
+  ```
+
+All consensus RPCs emit logs in the format `Node <node_id> sends RPC <rpc_name> to Node <node_id>.` and `Node <node_id> runs RPC <rpc_name> called by Node <node_id>.` for easy traceability.
+
+### Automated Raft Test Suite
+
+Five integration tests cover leader election, heartbeat stability, log replication, client request forwarding, and failover:
+
+```bash
+python -m consensus.tests.test_raft
+```
+
+The helper uses an ephemeral port range so it can be executed repeatedly without interfering with running clusters.
